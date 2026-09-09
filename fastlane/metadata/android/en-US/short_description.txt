@@ -1,0 +1,1 @@
+An encrypted, local-only calendar. No accounts, no ads, no recurrence yet.

@@ -1,0 +1,20 @@
+Angerona Fasti es un pequeño calendario en vista mensual, totalmente local — sin
+cuentas, sin sincronización en la nube, sin anuncios, sin rastreo. Todo permanece en
+tu dispositivo.
+
+Todo el calendario es un único archivo, cifrado con AES-256-GCM usando una clave
+alojada en el Android Keystore que nunca sale del hardware seguro del teléfono. Solo
+Angerona Fasti, en este dispositivo concreto, puede volver a leerlo.
+
+Funciones de esta primera versión:
+* Vista de cuadrícula mensual, toca un día para ver sus eventos
+* Eventos con título, hora de inicio/fin opcional, descripción opcional
+* Aún sin eventos recurrentes ni recordatorios/notificaciones — fuera del alcance a
+  propósito para esta versión
+* Español, inglés y francés, según el idioma del teléfono
+* Sin permiso de red
+
+Un aviso honesto: renombrar la app, reinstalarla o restaurar el teléfono de fábrica
+invalidan la clave de cifrado. El archivo del calendario queda entonces
+permanentemente ilegible — no hay contraseña de recuperación. Por favor, lee el README
+antes de confiarle algo importante.

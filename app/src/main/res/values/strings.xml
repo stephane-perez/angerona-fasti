@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Angerona Fasti</string>
+
+    <string name="cd_previous_month">Previous month</string>
+    <string name="cd_next_month">Next month</string>
+    <string name="cd_add_event">Add event</string>
+    <string name="cd_delete_event">Delete event</string>
+    <string name="action_today">Today</string>
+
+    <string name="no_events_this_day">No events on this day.</string>
+
+    <string name="dialog_title_new_event">New event</string>
+    <string name="dialog_title_edit_event">Edit event</string>
+    <string name="field_event_title">Title</string>
+    <string name="field_start_time">Start (HH:mm)</string>
+    <string name="field_end_time">End (HH:mm)</string>
+    <string name="field_description">Description</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
+    <string name="action_delete">Delete</string>
+
+    <string name="dialog_title_delete_event">Delete this event?</string>
+    <string name="dialog_body_delete_event">This can\'t be undone.</string>
+
+    <string name="toast_file_too_large">Calendar file too large to open (max 5 MB)</string>
+    <string name="toast_load_failed">Could not read the calendar — key missing or file corrupted</string>
+    <string name="toast_save_failed">Could not save — check storage and try again</string>
+</resources>

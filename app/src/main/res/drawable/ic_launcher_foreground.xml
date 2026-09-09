@@ -1,0 +1,12 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Simple monogram: a gold hairline square grid, evoking a calendar page -->
+    <path
+        android:pathData="M32,30 L76,30 L76,78 L32,78 Z M32,46 L76,46 M32,62 L76,62 M50,30 L50,78 M58,30 L58,78"
+        android:strokeColor="#b68235"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000" />
+</vector>
