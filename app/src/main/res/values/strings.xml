@@ -15,6 +15,14 @@
     <string name="field_start_time">Start (HH:mm)</string>
     <string name="field_end_time">End (HH:mm)</string>
     <string name="field_description">Description</string>
+    <string name="field_reminder">Reminder</string>
+    <string name="hint_reminder_needs_time">Set a start time to enable a reminder</string>
+    <string name="reminder_option_none">None</string>
+    <string name="reminder_option_15min">15 minutes before</string>
+    <string name="reminder_option_30min">30 minutes before</string>
+    <string name="reminder_option_1hour">1 hour before</string>
+    <string name="reminder_option_2hours">2 hours before</string>
+    <string name="reminder_option_1day">1 day before</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_save">Save</string>
     <string name="action_delete">Delete</string>
@@ -25,4 +33,11 @@
     <string name="toast_file_too_large">Calendar file too large to open (max 5 MB)</string>
     <string name="toast_load_failed">Could not read the calendar — key missing or file corrupted</string>
     <string name="toast_save_failed">Could not save — check storage and try again</string>
+
+    <string name="notification_channel_name">Event reminders</string>
+    <string name="notification_channel_description">Reminders for upcoming calendar events</string>
+    <!-- Deliberately generic — no event title or time here, so a glance at the lock
+         screen reveals nothing about the calendar's contents. -->
+    <string name="notification_title">Reminder</string>
+    <string name="notification_body_generic">You have an upcoming event</string>
 </resources>

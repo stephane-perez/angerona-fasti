@@ -15,6 +15,14 @@
     <string name="field_start_time">Inicio (HH:mm)</string>
     <string name="field_end_time">Fin (HH:mm)</string>
     <string name="field_description">Descripción</string>
+    <string name="field_reminder">Recordatorio</string>
+    <string name="hint_reminder_needs_time">Define una hora de inicio para activar un recordatorio</string>
+    <string name="reminder_option_none">Ninguno</string>
+    <string name="reminder_option_15min">15 minutos antes</string>
+    <string name="reminder_option_30min">30 minutos antes</string>
+    <string name="reminder_option_1hour">1 hora antes</string>
+    <string name="reminder_option_2hours">2 horas antes</string>
+    <string name="reminder_option_1day">1 día antes</string>
     <string name="action_cancel">Cancelar</string>
     <string name="action_save">Guardar</string>
     <string name="action_delete">Eliminar</string>
@@ -25,4 +33,11 @@
     <string name="toast_file_too_large">Archivo de calendario demasiado grande (máx. 5 MB)</string>
     <string name="toast_load_failed">No se pudo leer el calendario — clave ausente o archivo dañado</string>
     <string name="toast_save_failed">No se pudo guardar — comprueba el almacenamiento e inténtalo de nuevo</string>
+
+    <string name="notification_channel_name">Recordatorios de eventos</string>
+    <string name="notification_channel_description">Recordatorios para los próximos eventos del calendario</string>
+    <!-- Deliberadamente genérico: sin título ni hora del evento, para que un vistazo
+         a la pantalla de bloqueo no revele nada del contenido del calendario. -->
+    <string name="notification_title">Recordatorio</string>
+    <string name="notification_body_generic">Tienes un evento próximo</string>
 </resources>

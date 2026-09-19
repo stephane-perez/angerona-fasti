@@ -31,13 +31,34 @@ Every push to `main` builds a debug APK via GitHub Actions
 - **Events**: title, optional start/end time (`HH:mm`, plain text entry — no wheel
   picker), optional description. Tap a day to see its events, tap an event to edit it,
   the trash icon to delete (with confirmation).
-- **No recurrence.** No reminders/notifications. Both explicitly out of scope for v1 —
-  a deliberate scope decision, not an oversight.
+- **Reminders**: any event with a start time can get a system notification — 15 min,
+  30 min, 1 hour, 2 hours, or 1 day before. See "Reminders" below.
+- **No recurrence.** Explicitly out of scope for v1 — a deliberate scope decision, not
+  an oversight.
 - **Encrypted, single file**: the whole calendar is one JSON document, encrypted with
   AES-256-GCM via the Android Keystore, stored in the app's private storage (not
   Storage Access Framework — there's nothing for the person to pick a location for,
   unlike Angerona's many user-named note files). See "File encryption" below.
 - English, French, Spanish — follows the phone's system language.
+
+## Reminders
+Pick a lead time (15 min / 30 min / 1 hour / 2 hours / 1 day before) in an event's
+edit dialog, next to its start time — it needs one, since a reminder counts back from
+a clock time. At the chosen moment, Android shows a normal system notification; tapping
+it opens the app on that event's day.
+
+A few things worth knowing:
+- **The notification is deliberately generic** — just "Reminder / You have an upcoming
+  event", never the event's title, time or description. Anyone glancing at the lock
+  screen or notification shade learns nothing about your calendar. Tapping it opens
+  the app on the right day, but only once you're actually past your own lock screen.
+- Reminders use `AlarmManager`, so they still fire while the app is closed, and they're
+  automatically re-armed after a reboot.
+- Requires the notification permission (Android 13+), asked for once on first launch;
+  if declined, everything else still works, reminders just won't show. Exact-time
+  alarms need a system permission too (`SCHEDULE_EXACT_ALARM`) — if that's been
+  revoked in system settings, the app falls back to an inexact alarm (fires within a
+  few minutes of the chosen time) rather than silently dropping the reminder.
 
 ## File encryption
 

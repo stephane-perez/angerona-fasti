@@ -3,9 +3,12 @@ package com.stephaneperez.angerona.fasti.data
 import kotlinx.serialization.Serializable
 
 /**
- * A single calendar event. No recurrence, no reminders in v1 — see README.
+ * A single calendar event. No recurrence in v1 — see README.
  * [date] is ISO-8601 ("YYYY-MM-DD"); [startTime]/[endTime] are "HH:mm" 24h, optional
- * (an all-day event has both null).
+ * (an all-day event has both null). [reminderMinutesBefore] is how long before
+ * [startTime] a system notification should fire (null = no reminder); it's only
+ * meaningful when [startTime] is set — a reminder needs a clock time to count back
+ * from, so the UI keeps the two in sync.
  */
 @Serializable
 data class CalendarEvent(
@@ -15,6 +18,7 @@ data class CalendarEvent(
     val startTime: String? = null,
     val endTime: String? = null,
     val description: String = "",
+    val reminderMinutesBefore: Int? = null,
 )
 
 /**

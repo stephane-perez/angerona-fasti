@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Required (Android 13+) to actually show a reminder notification. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Lets a reminder fire at (close to) its exact chosen minute rather than being
+         batched by the system. The app checks canScheduleExactAlarms() at runtime and
+         falls back to an inexact alarm if this is denied/revoked — never assumed. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- AlarmManager clears every scheduled alarm on reboot; this lets the app
+         reschedule pending reminders once the device comes back up. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
@@ -11,12 +21,28 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Fires a reminder notification when its alarm goes off. Never exported —
+             only AlarmManager (from this app) ever addresses it. -->
+        <receiver
+            android:name=".receiver.ReminderReceiver"
+            android:exported="false" />
+
+        <!-- Reschedules all pending reminders after a reboot (see class doc). -->
+        <receiver
+            android:name=".receiver.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
