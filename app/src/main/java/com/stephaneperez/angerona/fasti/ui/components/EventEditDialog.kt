@@ -189,7 +189,12 @@ private fun FastiTextField(
     )
 }
 
-/** Plain "HH:mm" text entry — no wheel picker, kept deliberately simple for v1. */
+/**
+ * Plain "HH:mm" text entry — no wheel picker, kept deliberately simple for v1. The
+ * numeric keyboard ([KeyboardType.Number]) has no ":" key on Android, so the colon is
+ * inserted automatically as the person types digits (e.g. typing "1430" renders as
+ * "14:30") rather than asking them to type a character the keyboard can't produce.
+ */
 @Composable
 private fun TimeField(
     value: String,
@@ -210,10 +215,16 @@ private fun TimeField(
     TextField(
         value = value,
         onValueChange = { new ->
-            // Keep only digits and colon, cap at 5 chars ("HH:mm") — a light-touch
-            // guard, not full validation; an invalid value just won't parse as a time
-            // and is treated the same as "no time set".
-            val filtered = new.filter { it.isDigit() || it == ':' }.take(5)
+            // Strip everything but digits, cap at 4 ("HHmm"), then re-insert the colon
+            // ourselves once there are more than 2 digits. Still a light-touch guard,
+            // not full validation — an invalid value just won't parse as a time and is
+            // treated the same as "no time set".
+            val digits = new.filter { it.isDigit() }.take(4)
+            val filtered = if (digits.length > 2) {
+                digits.substring(0, 2) + ":" + digits.substring(2)
+            } else {
+                digits
+            }
             onValueChange(filtered)
         },
         placeholder = { Text(placeholder, style = FastiType.fieldValue.copy(color = FastiColors.inkMeta)) },
