@@ -31,8 +31,8 @@ Every push to `main` builds a debug APK via GitHub Actions
 - **Events**: title, optional start/end time (`HH:mm`, plain text entry — no wheel
   picker), optional description. Tap a day to see its events, tap an event to edit it,
   the trash icon to delete (with confirmation).
-- **Reminders**: any event with a start time can get a system notification — 15 min,
-  30 min, 1 hour, 2 hours, or 1 day before. See "Reminders" below.
+- **Reminders**: any event with a start time can get a system notification — 5 min,
+  15 min, 30 min, 1 hour, 2 hours, or 1 day before. See "Reminders" below.
 - **No recurrence.** Explicitly out of scope for v1 — a deliberate scope decision, not
   an oversight.
 - **Encrypted, single file**: the whole calendar is one JSON document, encrypted with
@@ -42,7 +42,7 @@ Every push to `main` builds a debug APK via GitHub Actions
 - English, French, Spanish — follows the phone's system language.
 
 ## Reminders
-Pick a lead time (15 min / 30 min / 1 hour / 2 hours / 1 day before) in an event's
+Pick a lead time (5 min / 15 min / 30 min / 1 hour / 2 hours / 1 day before) in an event's
 edit dialog, next to its start time — it needs one, since a reminder counts back from
 a clock time. At the chosen moment, Android shows a normal system notification; tapping
 it opens the app on that event's day.

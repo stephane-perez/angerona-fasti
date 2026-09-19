@@ -18,6 +18,7 @@
     <string name="field_reminder">Rappel</string>
     <string name="hint_reminder_needs_time">Définissez une heure de début pour activer un rappel</string>
     <string name="reminder_option_none">Aucun</string>
+    <string name="reminder_option_5min">5 minutes avant</string>
     <string name="reminder_option_15min">15 minutes avant</string>
     <string name="reminder_option_30min">30 minutes avant</string>
     <string name="reminder_option_1hour">1 heure avant</string>

@@ -18,6 +18,7 @@
     <string name="field_reminder">Recordatorio</string>
     <string name="hint_reminder_needs_time">Define una hora de inicio para activar un recordatorio</string>
     <string name="reminder_option_none">Ninguno</string>
+    <string name="reminder_option_5min">5 minutos antes</string>
     <string name="reminder_option_15min">15 minutos antes</string>
     <string name="reminder_option_30min">30 minutos antes</string>
     <string name="reminder_option_1hour">1 hora antes</string>

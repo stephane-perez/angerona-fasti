@@ -265,6 +265,7 @@ private fun ReminderField(
 
     val options: List<Pair<Int?, String>> = listOf(
         null to stringResource(R.string.reminder_option_none),
+        5 to stringResource(R.string.reminder_option_5min),
         15 to stringResource(R.string.reminder_option_15min),
         30 to stringResource(R.string.reminder_option_30min),
         60 to stringResource(R.string.reminder_option_1hour),
