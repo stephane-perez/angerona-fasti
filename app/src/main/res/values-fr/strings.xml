@@ -15,6 +15,14 @@
     <string name="field_start_time">Début (HH:mm)</string>
     <string name="field_end_time">Fin (HH:mm)</string>
     <string name="field_description">Description</string>
+    <string name="field_reminder">Rappel</string>
+    <string name="hint_reminder_needs_time">Définissez une heure de début pour activer un rappel</string>
+    <string name="reminder_option_none">Aucun</string>
+    <string name="reminder_option_15min">15 minutes avant</string>
+    <string name="reminder_option_30min">30 minutes avant</string>
+    <string name="reminder_option_1hour">1 heure avant</string>
+    <string name="reminder_option_2hours">2 heures avant</string>
+    <string name="reminder_option_1day">1 jour avant</string>
     <string name="action_cancel">Annuler</string>
     <string name="action_save">Enregistrer</string>
     <string name="action_delete">Supprimer</string>
@@ -25,4 +33,11 @@
     <string name="toast_file_too_large">Fichier calendrier trop volumineux (max 5 Mo)</string>
     <string name="toast_load_failed">Lecture du calendrier impossible — clé absente ou fichier corrompu</string>
     <string name="toast_save_failed">Échec de l\'enregistrement — vérifiez le stockage et réessayez</string>
+
+    <string name="notification_channel_name">Rappels d\'événements</string>
+    <string name="notification_channel_description">Rappels pour les événements du calendrier à venir</string>
+    <!-- Volontairement générique : ni titre ni heure de l'événement, pour qu'un
+         coup d'œil sur l'écran verrouillé ne révèle rien du contenu du calendrier. -->
+    <string name="notification_title">Rappel</string>
+    <string name="notification_body_generic">Vous avez un événement à venir</string>
 </resources>

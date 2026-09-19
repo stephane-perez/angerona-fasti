@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -32,11 +33,27 @@ import com.stephaneperez.angerona.fasti.ui.components.MonthGrid
 import com.stephaneperez.angerona.fasti.ui.components.MonthHeader
 import com.stephaneperez.angerona.fasti.ui.theme.FastiColors
 import java.time.LocalDate
+import java.time.YearMonth
 
 @Composable
-fun FastiScreen(viewModel: FastiViewModel = viewModel()) {
+fun FastiScreen(
+    viewModel: FastiViewModel = viewModel(),
+    navigateToDate: LocalDate? = null,
+    onDateConsumed: () -> Unit = {},
+) {
     val state by viewModel.uiState.collectAsState()
     val today = remember { LocalDate.now() }
+
+    // Opening the app from a reminder notification jumps straight to that event's day.
+    LaunchedEffect(navigateToDate) {
+        if (navigateToDate != null) {
+            viewModel.selectDate(navigateToDate)
+            if (YearMonth.from(navigateToDate) != state.visibleMonth) {
+                viewModel.goToMonth(YearMonth.from(navigateToDate))
+            }
+            onDateConsumed()
+        }
+    }
 
     val datesWithEvents = state.events.mapNotNull { runCatching { LocalDate.parse(it.date) }.getOrNull() }.toSet()
     val selectedDayEvents = state.events.filter { it.date == state.selectedDate.toString() }
@@ -94,6 +111,7 @@ fun FastiScreen(viewModel: FastiViewModel = viewModel()) {
                 onTitleChanged = viewModel::updateEditingTitle,
                 onTimesChanged = viewModel::updateEditingTimes,
                 onDescriptionChanged = viewModel::updateEditingDescription,
+                onReminderChanged = viewModel::updateEditingReminder,
                 onCancel = viewModel::cancelEditingEvent,
                 onConfirm = viewModel::confirmEditingEvent,
                 onDelete = if (editing.id != null) {

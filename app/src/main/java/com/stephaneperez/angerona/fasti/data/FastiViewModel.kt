@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.stephaneperez.angerona.fasti.R
+import com.stephaneperez.angerona.fasti.notification.ReminderScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +32,9 @@ data class EditingEvent(
     val startTime: String?,
     val endTime: String?,
     val description: String,
+    /** Minutes before [startTime] to fire a reminder notification; null = no reminder.
+     * Only meaningful once [startTime] is set — see [CalendarEvent]. */
+    val reminderMinutesBefore: Int? = null,
 )
 
 class FastiViewModel(application: Application) : AndroidViewModel(application) {
@@ -43,7 +47,14 @@ class FastiViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val context = getApplication<Application>()
             when (val result = repository.load()) {
-                is LoadResult.Success -> _uiState.update { it.copy(events = result.data.events, loading = false) }
+                is LoadResult.Success -> {
+                    _uiState.update { it.copy(events = result.data.events, loading = false) }
+                    // AlarmManager alarms don't survive an app force-stop or a period
+                    // without a reboot to trigger BootReceiver either — re-arming them
+                    // on every cold start is cheap and keeps them consistent with
+                    // whatever's actually in the calendar.
+                    ReminderScheduler.rescheduleAll(context, result.data.events)
+                }
                 LoadResult.ReadFailed -> _uiState.update { it.copy(loading = false) }
                 LoadResult.TooLarge -> _uiState.update {
                     it.copy(loading = false, toast = context.getString(R.string.toast_file_too_large))
@@ -74,11 +85,16 @@ class FastiViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(selectedDate = date) }
     }
 
+    /** Jumps the visible month grid to [month] — used when opening from a reminder notification. */
+    fun goToMonth(month: YearMonth) {
+        _uiState.update { it.copy(visibleMonth = month) }
+    }
+
     // ---- Event editing --------------------------------------------------
 
     fun startNewEvent(date: LocalDate) {
         _uiState.update {
-            it.copy(editingEvent = EditingEvent(id = null, date = date, title = "", startTime = null, endTime = null, description = ""))
+            it.copy(editingEvent = EditingEvent(id = null, date = date, title = "", startTime = null, endTime = null, description = "", reminderMinutesBefore = null))
         }
     }
 
@@ -92,6 +108,7 @@ class FastiViewModel(application: Application) : AndroidViewModel(application) {
                     startTime = event.startTime,
                     endTime = event.endTime,
                     description = event.description,
+                    reminderMinutesBefore = event.reminderMinutesBefore,
                 )
             )
         }
@@ -102,11 +119,25 @@ class FastiViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateEditingTimes(startTime: String?, endTime: String?) {
-        _uiState.update { it.copy(editingEvent = it.editingEvent?.copy(startTime = startTime, endTime = endTime)) }
+        _uiState.update {
+            it.copy(
+                editingEvent = it.editingEvent?.copy(
+                    startTime = startTime,
+                    endTime = endTime,
+                    // A reminder counts back from the start time — if that's cleared,
+                    // any reminder choice made against it no longer means anything.
+                    reminderMinutesBefore = if (startTime == null) null else it.editingEvent.reminderMinutesBefore,
+                )
+            )
+        }
     }
 
     fun updateEditingDescription(description: String) {
         _uiState.update { it.copy(editingEvent = it.editingEvent?.copy(description = description)) }
+    }
+
+    fun updateEditingReminder(minutesBefore: Int?) {
+        _uiState.update { it.copy(editingEvent = it.editingEvent?.copy(reminderMinutesBefore = minutesBefore)) }
     }
 
     fun cancelEditingEvent() {
@@ -118,34 +149,26 @@ class FastiViewModel(application: Application) : AndroidViewModel(application) {
         val editing = _uiState.value.editingEvent ?: return
         if (editing.title.isBlank()) return
 
+        val savedEvent = CalendarEvent(
+            id = editing.id ?: UUID.randomUUID().toString(),
+            title = editing.title.trim(),
+            date = editing.date.toString(),
+            startTime = editing.startTime,
+            endTime = editing.endTime,
+            description = editing.description,
+            reminderMinutesBefore = editing.reminderMinutesBefore,
+        )
+
         val current = _uiState.value.events
         val updated = if (editing.id == null) {
-            current + CalendarEvent(
-                id = UUID.randomUUID().toString(),
-                title = editing.title.trim(),
-                date = editing.date.toString(),
-                startTime = editing.startTime,
-                endTime = editing.endTime,
-                description = editing.description,
-            )
+            current + savedEvent
         } else {
-            current.map { event ->
-                if (event.id == editing.id) {
-                    event.copy(
-                        title = editing.title.trim(),
-                        date = editing.date.toString(),
-                        startTime = editing.startTime,
-                        endTime = editing.endTime,
-                        description = editing.description,
-                    )
-                } else {
-                    event
-                }
-            }
+            current.map { event -> if (event.id == editing.id) savedEvent else event }
         }
 
         _uiState.update { it.copy(events = updated, editingEvent = null) }
         persist(updated)
+        ReminderScheduler.schedule(getApplication(), savedEvent)
     }
 
     fun requestDelete(eventId: String) {
@@ -161,6 +184,7 @@ class FastiViewModel(application: Application) : AndroidViewModel(application) {
         val updated = _uiState.value.events.filterNot { it.id == id }
         _uiState.update { it.copy(events = updated, confirmDeleteId = null) }
         persist(updated)
+        ReminderScheduler.cancel(getApplication(), id)
     }
 
     private fun persist(events: List<CalendarEvent>) {

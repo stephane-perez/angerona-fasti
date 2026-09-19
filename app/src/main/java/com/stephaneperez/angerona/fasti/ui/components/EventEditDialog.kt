@@ -2,29 +2,38 @@ package com.stephaneperez.angerona.fasti.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -43,6 +52,7 @@ fun EventEditDialog(
     onTitleChanged: (String) -> Unit,
     onTimesChanged: (String?, String?) -> Unit,
     onDescriptionChanged: (String) -> Unit,
+    onReminderChanged: (Int?) -> Unit,
     onCancel: () -> Unit,
     onConfirm: () -> Unit,
     onDelete: (() -> Unit)?,
@@ -96,6 +106,26 @@ fun EventEditDialog(
                 singleLine = false,
                 modifier = Modifier.padding(top = 9.dp),
             )
+
+            val reminderEnabled = !editing.startTime.isNullOrBlank()
+            Text(
+                text = stringResource(R.string.field_reminder),
+                style = FastiType.eventMeta,
+                modifier = Modifier.padding(top = 14.dp, bottom = 4.dp),
+            )
+            ReminderField(
+                selectedMinutes = editing.reminderMinutesBefore,
+                enabled = reminderEnabled,
+                onSelected = onReminderChanged,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            if (!reminderEnabled) {
+                Text(
+                    text = stringResource(R.string.hint_reminder_needs_time),
+                    style = FastiType.eventMeta,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
 
             Row(
                 modifier = Modifier.padding(top = 18.dp).fillMaxWidth(),
@@ -203,6 +233,73 @@ private fun TimeField(
             cursorColor = FastiColors.accent,
         ),
     )
+}
+
+/**
+ * The lead-time choice for an event's reminder notification: None, or a fixed offset
+ * before the event's start time. Disabled (and forced back to "None" by the caller)
+ * when the event has no start time, since a reminder counts back from a clock time.
+ */
+@Composable
+private fun ReminderField(
+    selectedMinutes: Int?,
+    enabled: Boolean,
+    onSelected: (Int?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val hovered by interactionSource.collectIsHoveredAsState()
+    val borderColor = if (enabled && hovered) FastiColors.inkBorder45 else FastiColors.divider
+
+    val options: List<Pair<Int?, String>> = listOf(
+        null to stringResource(R.string.reminder_option_none),
+        15 to stringResource(R.string.reminder_option_15min),
+        30 to stringResource(R.string.reminder_option_30min),
+        60 to stringResource(R.string.reminder_option_1hour),
+        120 to stringResource(R.string.reminder_option_2hours),
+        1440 to stringResource(R.string.reminder_option_1day),
+    )
+    val selectedLabel = options.firstOrNull { it.first == selectedMinutes }?.second ?: options.first().second
+
+    Box(modifier = modifier) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(4.dp))
+                .border(1.dp, borderColor, RoundedCornerShape(4.dp))
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    enabled = enabled,
+                ) { expanded = true }
+                .padding(horizontal = 12.dp, vertical = 14.dp),
+        ) {
+            Text(
+                text = selectedLabel,
+                style = FastiType.fieldValue.copy(color = if (enabled) FastiColors.ink else FastiColors.inkMuted),
+                modifier = Modifier.weight(1f),
+            )
+            Icon(
+                painter = painterResource(R.drawable.ic_clock),
+                contentDescription = null,
+                tint = FastiColors.inkMeta,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { (minutes, label) ->
+                DropdownMenuItem(
+                    text = { Text(label, style = FastiType.fieldValue) },
+                    onClick = {
+                        onSelected(minutes)
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
 }
 
 @Composable
