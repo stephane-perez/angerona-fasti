@@ -1,7 +1,7 @@
 # Development notes
 
 ## Versioning
-Same mechanism as Angerona: `versionName`/`versionCode` come from the CI-passed
+Same mechanism as Angerona Nota: `versionName`/`versionCode` come from the CI-passed
 `-PversionNameOverride`/`-PversionCodeOverride` when present (our GitHub Actions
 workflow always supplies them), falling back to git (`git describe --tags` /
 `git rev-list --count HEAD`) for any other build environment (F-Droid's build server,
@@ -13,7 +13,7 @@ in particular), and to `0.0.0-dev` / `1` with no git history at all. See
 own defaults, nothing secret here, it's debug-only) so every CI build shares one
 signature and installs as a normal update rather than forcing an uninstall each time.
 `release` has no signingConfig at all today; a real release needs its own private,
-never-committed keystore. Full reasoning in Angerona's `DEVELOPMENT.md` — identical
+never-committed keystore. Full reasoning in Angerona Nota's `DEVELOPMENT.md` — identical
 mechanism, not repeated here.
 
 ## Data model and storage
@@ -23,19 +23,34 @@ event list), both `@Serializable` via kotlinx.serialization.
 
 `data/CalendarRepository.kt` loads/saves the whole calendar as one encrypted file,
 `calendar.fsti`, under `context.filesDir`. No SAF, no file picker — this is
-deliberately simpler than Angerona, which manages many user-named documents; here
+deliberately simpler than Angerona Nota, which manages many user-named documents; here
 there is exactly one file the person never names or locates themselves. Saving writes
 to `calendar.fsti.tmp` first and only makes the new content visible via
 `File.renameTo` (atomic on the same filesystem, with a copy-then-delete fallback for
-the rare case it isn't) — a real atomic write, which Angerona's SAF-based storage can
+the rare case it isn't) — a real atomic write, which Angerona Nota's SAF-based storage can
 never fully guarantee (see its `DEVELOPMENT.md`, round 4's "non-atomic writes" entry).
+The temp file is `fsync`ed before the rename, so a power cut right after a save can't
+leave the renamed file pointing at unwritten data.
 
-`data/CryptoManager.kt` mirrors Angerona's, with every hardening decision Angerona
+If `load()` finds a file it can't read (too large, not ours, decrypt failure, bad JSON,
+I/O error), the app starts on an empty calendar but the first save moves the old file
+to `calendar.fsti.unreadable-<timestamp>` instead of overwriting it (on a debug build,
+reachable with `adb shell run-as com.stephaneperez.angerona.fasti`). If that move
+fails, the save fails too.
+
+`FastiViewModel` does every load/save on `Dispatchers.IO`, one at a time (a `Mutex`:
+saves share one temp file), and each save writes the *current* event list once it
+holds the lock — so rapid edits can't land out of order. Saves run `NonCancellable`,
+so closing the screen right after an edit doesn't drop it. Edit entry points are
+no-ops until the initial load has finished, so an early edit can't be wiped by the
+loaded events (or overwrite the file before it's read).
+
+`data/CryptoManager.kt` mirrors Angerona Nota's, with every hardening decision Angerona Nota
 only reached after several audit rounds already baked in from the start:
 `getExistingKey()`/`getOrCreateKey()` split, GCM AAD over the format header, a
 container-size guard inside `decrypt()` itself, a real `MIN_CONTAINER_BYTES` check in
 `looksEncrypted()`, strict UTF-8 decoding, synchronized key access. The size limit is
-5 MB (`MAX_PLAINTEXT_BYTES`), much larger than Angerona's 100 KB per note, since this
+5 MB (`MAX_PLAINTEXT_BYTES`), much larger than Angerona Nota's 100 KB per note, since this
 one file holds every event rather than a single document.
 
 ## Reminders (notifications)
@@ -44,7 +59,8 @@ reminder) is the only addition to the data model — old calendar files without 
 field deserialize fine (kotlinx.serialization's `ignoreUnknownKeys` + the field's
 default `null`), so no format migration was needed.
 
-The moving pieces, all under `data/` (scheduling helpers) and `receiver/`:
+The moving pieces, under `notification/` and `receiver/` (plus the pure trigger-time
+computation in `data/EventRules.kt`):
 - `notification/NotificationHelper.kt` — owns the notification channel (created once,
   idempotently) and builds/shows the actual notification. Checks `POST_NOTIFICATIONS`
   itself before calling `notify()`, so a revoked permission just means no notification
@@ -54,19 +70,26 @@ The moving pieces, all under `data/` (scheduling helpers) and `receiver/`:
   to route a tap, not to render anything.
 - `notification/ReminderScheduler.kt` — the only place that touches `AlarmManager`.
   `schedule(event)` always cancels any previous alarm for that event id first, then
-  computes the trigger time from `date` + `startTime` − `reminderMinutesBefore` and
-  arms a new one (skipped if that time is already in the past). Prefers
-  `setExactAndAllowWhileIdle`, but checks `AlarmManager.canScheduleExactAlarms()`
-  first (API 31+) and falls back to a plain inexact `set()` if that permission's been
-  denied or revoked in system settings — a reminder should still eventually fire
-  rather than silently not exist. `cancel(eventId)` and `rescheduleAll(events)` round
+  computes the trigger time from `date` + `startTime` − `reminderMinutesBefore`
+  (`EventRules.reminderTriggerMillis`: whole days count back on the local calendar,
+  the remainder on the real timeline, so both "1 day before" and "1 hour before" stay
+  right across a DST change) and arms a new one (skipped if that time is already in
+  the past). Prefers `setExactAndAllowWhileIdle`, but checks
+  `AlarmManager.canScheduleExactAlarms()` first (API 31+) and falls back to an inexact
+  `setAndAllowWhileIdle()` if exact alarms are unavailable (or the exact call throws)
+  — a reminder should still eventually fire rather than silently not exist. The
+  manifest declares `USE_EXACT_ALARM` (granted at install on Android 13+, allowed for
+  calendar apps; `SCHEDULE_EXACT_ALARM` is denied by default on fresh installs from
+  Android 14) and `SCHEDULE_EXACT_ALARM` with `maxSdkVersion="32"` for Android 12. `cancel(eventId)` and `rescheduleAll(events)` round
   out the API; matching an alarm to an event is by `PendingIntent` request code
   (`eventId.hashCode()`) plus target component, which Android compares without
   looking at intent extras — so cancel doesn't need the event's other fields.
 - `receiver/ReminderReceiver.kt` — the `BroadcastReceiver` AlarmManager fires into;
   just hands off to `NotificationHelper.show()`.
 - `receiver/BootReceiver.kt` — listens for `BOOT_COMPLETED` (AlarmManager forgets
-  every alarm on reboot) and reschedules all of them. Uses `goAsync()` plus a
+  every alarm on reboot), `MY_PACKAGE_REPLACED` (app update), and `TIME_SET` /
+  `TIMEZONE_CHANGED` (alarms are absolute instants computed in the zone current at
+  scheduling time), and reschedules all of them. Uses `goAsync()` plus a
   background thread since it needs to decrypt the calendar file, which is I/O the
   main thread shouldn't block on. This is safe precisely because the Keystore key
   isn't gated behind user authentication (see `CryptoManager` above) — it's available
@@ -87,13 +110,33 @@ is coming up, not what); that was judged the right default for a calendar whose 
 point is that its contents are encrypted. The calendar file on disk is unaffected
 either way; this is purely about what the notification itself displays.
 
+## Testing
+Pure logic lives in Android-free code so it runs as plain JVM unit tests
+(`app/src/test/`, JUnit 4): `data/EventRules.kt` (time-field formatting and
+validation, reminder trigger time including DST, list helpers), `ui/components/MonthLayout.kt`
+(month-grid arithmetic), the JSON format's backward/forward compatibility, and
+`CryptoManager`'s container checks that run before the Keystore is touched.
+
+```
+./gradlew testDebugUnitTest
+```
+
+CI runs `testDebugUnitTest lintDebug assembleRelease` before building the APK (the
+release build is only a check that R8/minification still works — it's unsigned). The
+Keystore round trip, the receivers and the UI are not covered by automated tests;
+check them by hand on a device before tagging a release: create/edit/delete an event,
+a reminder ~5 min ahead (app closed, screen off), and a reboot with a pending
+reminder.
+
 ## Scope decisions for v1
 - **No recurrence.** Each event is a single, independent entry. Adding recurrence
   later means extending `CalendarEvent` with a recurrence rule and deciding how
   editing/deleting one instance of a recurring series should behave — real design
   work, deliberately deferred rather than half-built now.
 - **Time entry is a plain `HH:mm` text field**, not a wheel/clock picker. Deliberately
-  light for v1; revisit if manual entry proves annoying in practice.
+  light for v1; revisit if manual entry proves annoying in practice. Digits only, the
+  ":" is inserted automatically, and Save stays disabled until each non-empty field is
+  a real time (`00:00`–`23:59`).
 - **Month grid is the only view.** Week/day/agenda views were considered and set
   aside for this pass (see the conversation that scoped this project) — the month
   grid was the one explicitly chosen for v1.

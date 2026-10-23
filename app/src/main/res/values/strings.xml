@@ -17,6 +17,7 @@
     <string name="field_description">Description</string>
     <string name="field_reminder">Reminder</string>
     <string name="hint_reminder_needs_time">Set a start time to enable a reminder</string>
+    <string name="hint_invalid_time">Times must be valid, from 00:00 to 23:59</string>
     <string name="reminder_option_none">None</string>
     <string name="reminder_option_5min">5 minutes before</string>
     <string name="reminder_option_15min">15 minutes before</string>
@@ -31,8 +32,8 @@
     <string name="dialog_title_delete_event">Delete this event?</string>
     <string name="dialog_body_delete_event">This can\'t be undone.</string>
 
-    <string name="toast_file_too_large">Calendar file too large to open (max 5 MB)</string>
-    <string name="toast_load_failed">Could not read the calendar — key missing or file corrupted</string>
+    <string name="toast_file_too_large">Calendar file too large to open (max 5 MB). The old file is kept aside.</string>
+    <string name="toast_load_failed">Could not read the calendar — key missing or file corrupted. The old file is kept aside.</string>
     <string name="toast_save_failed">Could not save — check storage and try again</string>
 
     <string name="notification_channel_name">Event reminders</string>

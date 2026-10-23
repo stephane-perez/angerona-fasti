@@ -5,11 +5,16 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.stephaneperez.angerona.fasti.R
 import com.stephaneperez.angerona.fasti.notification.ReminderScheduler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.YearMonth
 import java.util.UUID
@@ -40,28 +45,31 @@ data class EditingEvent(
 class FastiViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = CalendarRepository(application)
 
+    /** Serializes every repository access (load, saves) — see [persist]. */
+    private val storageLock = Mutex()
+
     private val _uiState = MutableStateFlow(FastiUiState())
     val uiState: StateFlow<FastiUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
             val context = getApplication<Application>()
-            when (val result = repository.load()) {
-                is LoadResult.Success -> {
-                    _uiState.update { it.copy(events = result.data.events, loading = false) }
+            val result = withContext(Dispatchers.IO) {
+                storageLock.withLock { repository.load() }.also { loaded ->
                     // AlarmManager alarms don't survive an app force-stop or a period
                     // without a reboot to trigger BootReceiver either — re-arming them
                     // on every cold start is cheap and keeps them consistent with
                     // whatever's actually in the calendar.
-                    ReminderScheduler.rescheduleAll(context, result.data.events)
+                    if (loaded is LoadResult.Success) ReminderScheduler.rescheduleAll(context, loaded.data.events)
                 }
-                LoadResult.ReadFailed -> _uiState.update { it.copy(loading = false) }
+            }
+            when (result) {
+                is LoadResult.Success -> _uiState.update { it.copy(events = result.data.events, loading = false) }
                 LoadResult.TooLarge -> _uiState.update {
                     it.copy(loading = false, toast = context.getString(R.string.toast_file_too_large))
                 }
-                LoadResult.NotEncrypted, LoadResult.DecryptFailed, LoadResult.CorruptJson -> _uiState.update {
-                    it.copy(loading = false, toast = context.getString(R.string.toast_load_failed))
-                }
+                LoadResult.ReadFailed, LoadResult.NotEncrypted, LoadResult.DecryptFailed, LoadResult.CorruptJson ->
+                    _uiState.update { it.copy(loading = false, toast = context.getString(R.string.toast_load_failed)) }
             }
         }
     }
@@ -92,18 +100,25 @@ class FastiViewModel(application: Application) : AndroidViewModel(application) {
 
     // ---- Event editing --------------------------------------------------
 
+    // Every edit entry point is a no-op until the initial load has finished: an event
+    // added before then would be wiped when the loaded events land, and its save could
+    // overwrite the file before it was even read.
+
     fun startNewEvent(date: LocalDate) {
+        if (_uiState.value.loading) return
         _uiState.update {
             it.copy(editingEvent = EditingEvent(id = null, date = date, title = "", startTime = null, endTime = null, description = "", reminderMinutesBefore = null))
         }
     }
 
     fun startEditingEvent(event: CalendarEvent) {
+        if (_uiState.value.loading) return
+        val date = runCatching { LocalDate.parse(event.date) }.getOrNull() ?: return
         _uiState.update {
             it.copy(
                 editingEvent = EditingEvent(
                     id = event.id,
-                    date = LocalDate.parse(event.date),
+                    date = date,
                     title = event.title,
                     startTime = event.startTime,
                     endTime = event.endTime,
@@ -148,6 +163,7 @@ class FastiViewModel(application: Application) : AndroidViewModel(application) {
     fun confirmEditingEvent() {
         val editing = _uiState.value.editingEvent ?: return
         if (editing.title.isBlank()) return
+        if (!EventRules.isAcceptableTime(editing.startTime) || !EventRules.isAcceptableTime(editing.endTime)) return
 
         val savedEvent = CalendarEvent(
             id = editing.id ?: UUID.randomUUID().toString(),
@@ -159,19 +175,13 @@ class FastiViewModel(application: Application) : AndroidViewModel(application) {
             reminderMinutesBefore = editing.reminderMinutesBefore,
         )
 
-        val current = _uiState.value.events
-        val updated = if (editing.id == null) {
-            current + savedEvent
-        } else {
-            current.map { event -> if (event.id == editing.id) savedEvent else event }
-        }
-
-        _uiState.update { it.copy(events = updated, editingEvent = null) }
-        persist(updated)
+        _uiState.update { it.copy(events = EventRules.upsert(it.events, savedEvent), editingEvent = null) }
+        persist()
         ReminderScheduler.schedule(getApplication(), savedEvent)
     }
 
     fun requestDelete(eventId: String) {
+        if (_uiState.value.loading) return
         _uiState.update { it.copy(confirmDeleteId = eventId) }
     }
 
@@ -181,15 +191,23 @@ class FastiViewModel(application: Application) : AndroidViewModel(application) {
 
     fun confirmDelete() {
         val id = _uiState.value.confirmDeleteId ?: return
-        val updated = _uiState.value.events.filterNot { it.id == id }
-        _uiState.update { it.copy(events = updated, confirmDeleteId = null) }
-        persist(updated)
+        _uiState.update { state -> state.copy(events = state.events.filterNot { it.id == id }, confirmDeleteId = null) }
+        persist()
         ReminderScheduler.cancel(getApplication(), id)
     }
 
-    private fun persist(events: List<CalendarEvent>) {
+    /**
+     * Saves the calendar off the main thread. Saves run one at a time (they share one
+     * temp file), and each writes the *current* event list once it holds the lock rather
+     * than a snapshot taken at launch — so however quick successive edits interleave,
+     * the last write to land always holds the latest state. [NonCancellable] lets a save
+     * that's still queued finish even if the screen is closed right after an edit.
+     */
+    private fun persist() {
         viewModelScope.launch {
-            val success = repository.save(CalendarData(events = events))
+            val success = withContext(Dispatchers.IO + NonCancellable) {
+                storageLock.withLock { repository.save(CalendarData(events = _uiState.value.events)) }
+            }
             if (!success) {
                 val context = getApplication<Application>()
                 _uiState.update { it.copy(toast = context.getString(R.string.toast_save_failed)) }

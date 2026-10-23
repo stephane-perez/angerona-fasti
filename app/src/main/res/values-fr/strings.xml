@@ -17,6 +17,7 @@
     <string name="field_description">Description</string>
     <string name="field_reminder">Rappel</string>
     <string name="hint_reminder_needs_time">Définissez une heure de début pour activer un rappel</string>
+    <string name="hint_invalid_time">Les heures doivent être valides, de 00:00 à 23:59</string>
     <string name="reminder_option_none">Aucun</string>
     <string name="reminder_option_5min">5 minutes avant</string>
     <string name="reminder_option_15min">15 minutes avant</string>
@@ -31,8 +32,8 @@
     <string name="dialog_title_delete_event">Supprimer cet événement ?</string>
     <string name="dialog_body_delete_event">Cette action est irréversible.</string>
 
-    <string name="toast_file_too_large">Fichier calendrier trop volumineux (max 5 Mo)</string>
-    <string name="toast_load_failed">Lecture du calendrier impossible — clé absente ou fichier corrompu</string>
+    <string name="toast_file_too_large">Fichier calendrier trop volumineux (max 5 Mo). L\'ancien fichier est conservé à part.</string>
+    <string name="toast_load_failed">Lecture du calendrier impossible — clé absente ou fichier corrompu. L\'ancien fichier est conservé à part.</string>
     <string name="toast_save_failed">Échec de l\'enregistrement — vérifiez le stockage et réessayez</string>
 
     <string name="notification_channel_name">Rappels d\'événements</string>

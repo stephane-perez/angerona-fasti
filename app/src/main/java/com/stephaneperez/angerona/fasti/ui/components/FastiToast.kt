@@ -24,7 +24,8 @@ import kotlinx.coroutines.delay
 fun FastiToastHost(message: String, onDismissed: () -> Unit, modifier: Modifier = Modifier) {
     LaunchedEffect(message) {
         if (message.isNotEmpty()) {
-            delay(2200)
+            // Longer messages (load failures) stay up long enough to actually be read.
+            delay(if (message.length > 60) 5000 else 2200)
             onDismissed()
         }
     }

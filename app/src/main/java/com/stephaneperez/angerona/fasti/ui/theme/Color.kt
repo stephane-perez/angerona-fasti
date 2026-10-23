@@ -3,7 +3,7 @@ package com.stephaneperez.angerona.fasti.ui.theme
 import androidx.compose.ui.graphics.Color
 
 /**
- * Design tokens shared with Angerona ("Classical" design system) for visual
+ * Design tokens shared with Angerona Nota ("Classical" design system) for visual
  * consistency across the two apps. Accent is used only as stroke / text, never as a
  * fill.
  */

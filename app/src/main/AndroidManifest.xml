@@ -3,10 +3,16 @@
 
     <!-- Required (Android 13+) to actually show a reminder notification. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- Lets a reminder fire at (close to) its exact chosen minute rather than being
-         batched by the system. The app checks canScheduleExactAlarms() at runtime and
-         falls back to an inexact alarm if this is denied/revoked — never assumed. -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Lets a reminder fire at its exact chosen minute rather than being batched by
+         the system. USE_EXACT_ALARM (Android 13+) is granted at install time to
+         calendar/alarm apps, which this is; SCHEDULE_EXACT_ALARM covers Android 12
+         (it is denied by default on fresh installs from Android 14 on, hence
+         USE_EXACT_ALARM). The app still checks canScheduleExactAlarms() at runtime and
+         falls back to an inexact alarm if exact ones are unavailable — never assumed. -->
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <!-- AlarmManager clears every scheduled alarm on reboot; this lets the app
          reschedule pending reminders once the device comes back up. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -35,12 +41,16 @@
             android:name=".receiver.ReminderReceiver"
             android:exported="false" />
 
-        <!-- Reschedules all pending reminders after a reboot (see class doc). -->
+        <!-- Reschedules all pending reminders after a reboot, an app update, or a
+             clock/time zone change (see class doc). -->
         <receiver
             android:name=".receiver.BootReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
         </receiver>
     </application>

@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.stephaneperez.angerona.fasti.R
 import com.stephaneperez.angerona.fasti.data.CalendarEvent
+import com.stephaneperez.angerona.fasti.data.EventRules
 import com.stephaneperez.angerona.fasti.ui.theme.FastiColors
 import com.stephaneperez.angerona.fasti.ui.theme.FastiType
 
@@ -43,7 +44,7 @@ fun DayEventsList(
     }
 
     LazyColumn(modifier = modifier) {
-        items(events.sortedBy { it.startTime ?: "" }, key = { it.id }) { event ->
+        items(EventRules.sortedForDay(events), key = { it.id }) { event ->
             EventRow(event = event, onClick = { onEventClick(event) }, onDelete = { onEventDelete(event) })
         }
     }

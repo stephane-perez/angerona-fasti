@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.stephaneperez.angerona.fasti.R
 import com.stephaneperez.angerona.fasti.data.EditingEvent
+import com.stephaneperez.angerona.fasti.data.EventRules
 import com.stephaneperez.angerona.fasti.ui.theme.FastiColors
 import com.stephaneperez.angerona.fasti.ui.theme.FastiType
 import java.time.format.DateTimeFormatter
@@ -98,6 +99,14 @@ fun EventEditDialog(
                     modifier = Modifier.weight(1f),
                 )
             }
+            val timesValid = EventRules.isAcceptableTime(editing.startTime) && EventRules.isAcceptableTime(editing.endTime)
+            if (!timesValid) {
+                Text(
+                    text = stringResource(R.string.hint_invalid_time),
+                    style = FastiType.eventMeta.copy(color = FastiColors.accent700),
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
 
             FastiTextField(
                 value = editing.description,
@@ -107,7 +116,7 @@ fun EventEditDialog(
                 modifier = Modifier.padding(top = 9.dp),
             )
 
-            val reminderEnabled = !editing.startTime.isNullOrBlank()
+            val reminderEnabled = editing.startTime != null && EventRules.isValidTime(editing.startTime)
             Text(
                 text = stringResource(R.string.field_reminder),
                 style = FastiType.eventMeta,
@@ -141,7 +150,7 @@ fun EventEditDialog(
                     DialogAccentButton(
                         text = stringResource(R.string.action_save),
                         onClick = onConfirm,
-                        enabled = editing.title.isNotBlank(),
+                        enabled = editing.title.isNotBlank() && timesValid,
                     )
                 }
             }
@@ -194,6 +203,7 @@ private fun FastiTextField(
  * numeric keyboard ([KeyboardType.Number]) has no ":" key on Android, so the colon is
  * inserted automatically as the person types digits (e.g. typing "1430" renders as
  * "14:30") rather than asking them to type a character the keyboard can't produce.
+ * Anything that isn't a complete, real time keeps Save disabled (see [EventRules]).
  */
 @Composable
 private fun TimeField(
@@ -215,16 +225,7 @@ private fun TimeField(
     TextField(
         value = value,
         onValueChange = { new ->
-            // Strip everything but digits, cap at 4 ("HHmm"), then re-insert the colon
-            // ourselves once there are more than 2 digits. Still a light-touch guard,
-            // not full validation — an invalid value just won't parse as a time and is
-            // treated the same as "no time set".
-            val digits = new.filter { it.isDigit() }.take(4)
-            val filtered = if (digits.length > 2) {
-                digits.substring(0, 2) + ":" + digits.substring(2)
-            } else {
-                digits
-            }
+            val filtered = EventRules.formatTimeInput(new)
             onValueChange(filtered)
         },
         placeholder = { Text(placeholder, style = FastiType.fieldValue.copy(color = FastiColors.inkMeta)) },
