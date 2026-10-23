@@ -10,9 +10,9 @@ import java.io.FileOutputStream
  * Persists the whole calendar as a single encrypted file, `calendar.fsti`, in the app's
  * private storage (`context.filesDir`) — no Storage Access Framework, no file picker:
  * there's exactly one file, always in the same place, and the person never chooses a
- * name or location for it. This is a deliberate simplification versus Angerona (which
+ * name or location for it. This is a deliberate simplification versus Angerona Nota (which
  * uses SAF, since it manages many user-chosen files) and buys a real correctness
- * property Angerona could never fully guarantee: a true atomic write. Because this is
+ * property Angerona Nota could never fully guarantee: a true atomic write. Because this is
  * a normal filesystem path rather than a SAF document, a write goes to a temp file
  * first and is only made visible via `File.renameTo` (atomic on the same filesystem),
  * so a write that fails partway never corrupts or truncates the previous good file.
@@ -50,7 +50,7 @@ class CalendarRepository(context: Context) {
         if (bytes.size > CryptoManager.MAX_PLAINTEXT_BYTES + 64) {
             // A little slack over the plaintext bound for header/IV/tag overhead —
             // this file is entirely ours, so there's no "legacy plain format" case to
-            // worry about the way Angerona has to for user-picked .txt files.
+            // worry about the way Angerona Nota has to for user-picked .txt files.
             return LoadResult.TooLarge
         }
 

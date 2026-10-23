@@ -6,15 +6,15 @@ Le calendrier entier est un seul fichier, chiffré en AES-256-GCM avec une clé
 conservée dans l'Android Keystore qui ne quitte jamais le matériel sécurisé du
 téléphone. Seule Angerona Fasti, sur cet appareil précis, peut le relire.
 
-Fonctionnalités de cette première version :
+Fonctionnalités :
 * Vue en grille mensuelle, appuyez sur un jour pour voir ses événements
 * Événements avec titre, heures de début/fin optionnelles, description optionnelle
-* Pas encore d'événements récurrents ni de rappels/notifications — hors périmètre
-  volontairement pour cette version
+* Rappel optionnel (de 5 min à 1 jour avant), affiché par une notification
+  volontairement générique : rien de l'événement n'apparaît sur l'écran verrouillé
+* Pas d'événements récurrents — hors périmètre, volontairement
 * Français, anglais et espagnol, selon la langue du téléphone
 * Aucune permission réseau
 
-Un mot d'honnêteté : renommer l'app, la réinstaller, ou réinitialiser le téléphone
-invalident la clé de chiffrement. Le fichier calendrier devient alors définitivement
+Un mot d'honnêteté : désinstaller l'app ou réinitialiser le téléphone invalide la clé de chiffrement. Le fichier calendrier devient alors définitivement
 illisible — pas de mot de passe de secours. Merci de lire le README avant d'y confier
 quoi que ce soit d'important.

@@ -14,7 +14,7 @@ import javax.crypto.spec.GCMParameterSpec
  * Encrypts and decrypts the calendar's JSON content with an AES-256-GCM key held in the
  * Android Keystore.
  *
- * This is the same design used by Angerona (see that project's DEVELOPMENT.md for the
+ * This is the same design used by Angerona Nota (see that project's DEVELOPMENT.md for the
  * full audit history that shaped it), applied here from the start rather than
  * discovered through several rounds of review:
  * - `getExistingKey()` is split from `getOrCreateKey()` so a failed decrypt never mints
