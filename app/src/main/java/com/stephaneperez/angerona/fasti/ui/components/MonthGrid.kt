@@ -45,12 +45,9 @@ fun MonthGrid(
 ) {
     val locale = Locale.getDefault()
     val firstDayOfWeek = firstDayOfWeekFor(locale)
-    val firstOfMonth = month.atDay(1)
-    // Days from the previous month needed to fill the first row.
-    val leadingBlanks = ((firstOfMonth.dayOfWeek.value - firstDayOfWeek.value) + 7) % 7
+    val leadingBlanks = MonthLayout.leadingBlanks(month, firstDayOfWeek)
     val daysInMonth = month.lengthOfMonth()
-    val totalCells = leadingBlanks + daysInMonth
-    val rows = (totalCells + 6) / 7
+    val rows = MonthLayout.rowCount(month, firstDayOfWeek)
 
     Column(modifier = modifier.fillMaxWidth()) {
         // Weekday header row

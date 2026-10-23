@@ -17,6 +17,7 @@
     <string name="field_description">Descripción</string>
     <string name="field_reminder">Recordatorio</string>
     <string name="hint_reminder_needs_time">Define una hora de inicio para activar un recordatorio</string>
+    <string name="hint_invalid_time">Las horas deben ser válidas, de 00:00 a 23:59</string>
     <string name="reminder_option_none">Ninguno</string>
     <string name="reminder_option_5min">5 minutos antes</string>
     <string name="reminder_option_15min">15 minutos antes</string>
@@ -31,8 +32,8 @@
     <string name="dialog_title_delete_event">¿Eliminar este evento?</string>
     <string name="dialog_body_delete_event">Esta acción no se puede deshacer.</string>
 
-    <string name="toast_file_too_large">Archivo de calendario demasiado grande (máx. 5 MB)</string>
-    <string name="toast_load_failed">No se pudo leer el calendario — clave ausente o archivo dañado</string>
+    <string name="toast_file_too_large">Archivo de calendario demasiado grande (máx. 5 MB). El archivo antiguo se conserva aparte.</string>
+    <string name="toast_load_failed">No se pudo leer el calendario — clave ausente o archivo dañado. El archivo antiguo se conserva aparte.</string>
     <string name="toast_save_failed">No se pudo guardar — comprueba el almacenamiento e inténtalo de nuevo</string>
 
     <string name="notification_channel_name">Recordatorios de eventos</string>
